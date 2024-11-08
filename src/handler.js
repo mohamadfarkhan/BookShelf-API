@@ -103,26 +103,8 @@ const editBookByIdHandler = (request, h) => {
   const updateAt = new Date().toISOString();
 
   const index = books.findIndex((book) => book.id === id);
-
-  if (index !== -1) {
-    books[index] = {
-      ...books[index],
-      name,
-      author,
-      summary,
-      publisher,
-      pageCount,
-      readPage,
-      reading,
-      updateAt,
-    }
-    const response = h.response({
-      status: "fail",
-      message: "Gagal memperbarui buku. Id tidak ditemukan",
-    });
-    response.code(400);
-    return response;
-  } else if (!name) {
+  
+  if (!name) {
       const response = h.response({
         status: "fail",
         message: "Gagal memperbarui buku. Mohon isi nama buku",
@@ -137,11 +119,32 @@ const editBookByIdHandler = (request, h) => {
       });
       response.code(400);
       return response;
-    }
-
+    } else if (index !== -1) {
+      const response = h.response({
+        status: "fail",
+        message: "Gagal memperbarui buku. Id tidak ditemukan",
+      });
+      response.code(400);
+      return response;
+    };
+      books[index] = {
+        ...books[index],
+        name,
+        author,
+        summary,
+        publisher,
+        pageCount,
+        readPage,
+        reading,
+        updateAt,
+      };
+    
     const response = h.response({
       status: "success",
       message: "Buku berhasil diperbarui",
+      data: {
+        book: books,
+      },
     });
     response.code(201);
     return response;
