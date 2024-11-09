@@ -1,6 +1,10 @@
 import globals from "globals";
 import pluginJs from "@eslint/js";
+<<<<<<< HEAD
 import daStyle from "eslint-config-dicodingacademy";
+=======
+import daStyle from 'eslint-config-dicodingacademy';
+>>>>>>> origin/main
 
 
 /** @type {import('eslint').Linter.Config[]} */
