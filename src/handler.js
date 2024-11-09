@@ -2,8 +2,11 @@ const { nanoid } = require("nanoid");
 const books = require("./books");
 
 const addBookHandler = (request, h) => {
-  const { name, author, summary, publisher, pageCount, readPage, reading } =
+  const { name, year, author, summary, publisher, pageCount, readPage, reading } =
     request.payload;
+  const id = nanoid(16);
+  const finished = pageCount === readPage;
+  const insertedAt = new Date().toISOString();
     if (!name) {
       return h.response({
         status: "fail",
@@ -16,14 +19,11 @@ const addBookHandler = (request, h) => {
         "Gagal menambahkan buku. readPage tidak boleh lebih besar dari pageCount",
       }).code(400);
     }
-  const id = nanoid(16);
-  const finished = pageCount === readPage;
-  const createdAt = new Date().toISOString();
-  const updatedAt = createdAt;
-
+  const updatedAt = insertedAt;
   const newBook = {
     id,
     name,
+    year,
     author,
     summary,
     publisher,
@@ -31,7 +31,7 @@ const addBookHandler = (request, h) => {
     readPage,
     finished,
     reading,
-    createdAt,
+    insertedAt,
     updatedAt,
   };
 
@@ -53,59 +53,58 @@ const addBookHandler = (request, h) => {
 };
 
 const getAllBookHandler = (request, h) => {
-  const {name, reading, finished} = request.query;
-  const filteredBooks = books;
+  const { name, reading, finished } = request.query;
+  let filteredBooks = books; // Use let to allow reassignment
 
-  // Fitur Pertama Filter By Nama
+  // Filter By Name
   if (name) {
-    filteredBooks = filteredBooks.filter((book) => book.name.toLowerCase().includes(name.toLowerCase()));
+    filteredBooks = filteredBooks.filter((book) => 
+      book.name.toLowerCase().includes(name.toLowerCase())
+    );
   }
-  
-  if (reading !== undefined){ //Fitur Kedua Filter By Status Reading
+
+  // Filter By Status Reading
+  if (reading !== undefined) {
     const readingStatus = reading === "1";
     filteredBooks = filteredBooks.filter((book) => book.reading === readingStatus);
   }
-  
-  if (finished !== undefined){ //Fitur Ketiga Filter By Status Finished
+
+  // Filter By Status Finished
+  if (finished !== undefined) {
     const finishedStatus = finished === "1";
-    filterdBooks = filteredBooks.filter((book) => book.finished === finishedStatus);
+    filteredBooks = filteredBooks.filter((book) => book.finished === finishedStatus);
   }
 
+  // Return response
   return h.response({
     status: "success",
     data: {
-      books:
-        filteredBooks.length > 0
-          ? filteredBooks.map((book) => ({
-              id: book.id,
-              name: book.name,
-              publisher: book.publisher,
-            }))
-          : [],
+      books: filteredBooks.map((book) => ({
+        id: book.id,
+        name: book.name,
+        publisher: book.publisher,
+      })),
     },
   }).code(200);
 };
 
 const getBookByIdHandler = (request, h) => {
-  const { id } = request.params;
-  const book = books.filter((n) => n.id === id)[0];
+  const { bookId } = request.params;
+  const book = books.filter((n) => n.id === bookId)[0];
 
   if (book === undefined) {
-    const response = h.response({
+    return h.response({
       status: "fail",
       message: "Buku tidak ditemukan",
+      data: [],
     });
-    response.code(404);
-    return response;
   }
-  const response = h.response({
+  return h.response({
     status: "success",
       data: {
         book,
       },
-  });
-  response.code(201);
-  return response;
+  }).code(200);
 };
 
 const editBookByIdHandler = (request, h) => {
@@ -165,18 +164,19 @@ const deleteBookByIdHandler = (request, h) => {
   const { id } = request.params;
   const index = books.findIndex((book) => book.id === id);
 
-  if (index !== -1) {
+  if (index === -1) {
     return h.response({
       status: "fail",
       message: "Buku gagal dihapus. Id tidak ditemukan",
     }).code(404);
   }
-  books.splice(index, 1);
 
-  return h.response({
-    status: "success",
-    message: "Buku berhasil dihapus",
-  }).code(200);
+    books.splice(index, 1);
+
+    return h.response({
+      status: "success",
+      message: "Buku berhasil dihapus",
+    }).code(200);
 };
 
 module.exports = {
